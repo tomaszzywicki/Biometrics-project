@@ -8,10 +8,18 @@ class ImageProcessor:
         self.pixels = np.array(self.image)
         self.processed_pixels = self.pixels.copy()
 
-    def get_RGBA(self):
+
+    def get_RGBA(self, processed=False):
+        if processed:
+            if self.processed_pixels.shape[-1] == 4:
+                return self.processed_pixels[:, :, 0], self.processed_pixels[:, :, 1], self.processed_pixels[:, :, 2], self.processed_pixels[:, :, 3]
+            else:
+                return self.processed_pixels[:, :, 0], self.processed_pixels[:, :, 1], self.processed_pixels[:, :, 2]
+                
         if self.pixels.shape[-1] == 4:
             return self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2], self.pixels[:, :, 3]
         return self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2], None 
+
 
     def grayscale(self, method="luminosity"):
         R, G, B, A = self.get_RGBA()
@@ -34,9 +42,11 @@ class ImageProcessor:
         self.show(pixels)
         self.processed_pixels = pixels
 
+
     def adjust_brightness(self, brightnessFactor=0):
         self.processed_pixels = np.clip(self.pixels.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
         self.show(self.processed_pixels)
+
 
     def contrast_correction(self, contrastFactor: int = 0):
         R, G, B, A = self.get_RGBA()
@@ -53,12 +63,30 @@ class ImageProcessor:
         
         self.show(self.processed_pixels) 
 
+
     def negative(self):
         R, G, B, A = self.get_RGBA()
         
         self.processed_pixels = np.stack([255 - R, 255 - G, 255 - B, A], axis=-1) if A is not None else np.stack([255 - R, 255 - G, 255 - B], axis=-1)
 
         self.show(self.processed_pixels) 
+
+
+    def binarize(self, threshold, method="luminosity"):
+        self.grayscale(method)
+        R, G, B, A = self.get_RGBA(processed=True)
+
+        R_new = np.where(R > threshold, 255, 0).astype(np.uint8)
+        G_new = np.where(G > threshold, 255, 0).astype(np.uint8)
+        B_new = np.where(B > threshold, 255, 0).astype(np.uint8)
+
+        if A is not None:
+            self.processed_pixels = np.stack([R_new, G_new, B_new, A], axis=-1)
+        else:
+            self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
+
+        self.show(self.processed_pixels)
+
 
     def show(self, pixels=None):
         if pixels is None:
@@ -82,5 +110,4 @@ if __name__ == "__main__":
     # processor.grayscale(method="decomposition-min")
     # processor.adjust_brightness(brightnessFactor=60)
     # processor.contrast_correction(128)
-    
-    lenka.negative()    # Slight increase in contrast
+    lenka.binarize(120)
