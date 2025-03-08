@@ -53,6 +53,13 @@ class ImageProcessor:
         
         self.show(self.processed_pixels) 
 
+    def negative(self):
+        R, G, B, A = self.get_RGBA()
+        
+        self.processed_pixels = np.stack([255 - R, 255 - G, 255 - B, A], axis=-1) if A is not None else np.stack([255 - R, 255 - G, 255 - B], axis=-1)
+
+        self.show(self.processed_pixels) 
+
     def show(self, pixels=None):
         if pixels is None:
             pixels = self.pixels
@@ -76,4 +83,4 @@ if __name__ == "__main__":
     # processor.adjust_brightness(brightnessFactor=60)
     # processor.contrast_correction(128)
     
-    lenka.contrast_correction(-128)    # Slight increase in contrast
+    lenka.negative()    # Slight increase in contrast
