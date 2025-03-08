@@ -8,16 +8,14 @@ class ImageProcessor:
         self.pixels = np.array(self.image)
         self.processed_pixels = self.pixels.copy()
 
+    def get_RGBA(self):
+        if self.pixels.shape[-1] == 4:
+            return self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2], self.pixels[:, :, 3]
+        return self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2], None 
+
     def grayscale(self, method="luminosity"):
-        channels = self.pixels.shape[-1]
-        has_alpha = channels == 4
-
-        if has_alpha:
-            R, G, B, A = self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2], self.pixels[:, :, 3]
-        else:
-            R, G, B = self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2]
-            A = None  
-
+        R, G, B, A = self.get_RGBA()
+         
         methods = {
             "average": ((R.astype(np.uint16) + G.astype(np.uint16) + B.astype(np.uint16)) // 3).astype(np.uint8),
             "luminosity": (0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8),
@@ -31,19 +29,29 @@ class ImageProcessor:
             raise ValueError("Unknown grayscale method!")
 
         gray = methods[method]
-        pixels = np.stack([gray, gray, gray, A], axis=-1) if has_alpha else np.stack([gray] * 3, axis=-1)
+        pixels = np.stack([gray, gray, gray, A], axis=-1) if A is not None else np.stack([gray] * 3, axis=-1)
 
         self.show(pixels)
         self.processed_pixels = pixels
 
     def adjust_brightness(self, brightnessFactor=0):
-        # ten chyba nic nie robi z ciemnymi bo mnozenie lepiej dziala na jasne obszary niz na ciemne
-        # self.processed_pixels = np.clip(self.pixels.astype(np.float32) * (1 + brightnessFactor), 0, 255).astype(np.uint8)
-        
-        # opcja z poprostu dodaniem wartosci
         self.processed_pixels = np.clip(self.pixels.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
-        
         self.show(self.processed_pixels)
+
+    def contrast_correction(self, contrastFactor: int = 0):
+        R, G, B, A = self.get_RGBA()
+        
+        F = (259 * (contrastFactor + 255)) / (255 * (259 - contrastFactor))
+        
+        adjust = lambda channel: np.clip(F * (channel.astype(np.float32) - 128) + 128, 0, 255).astype(np.uint8)
+        
+        adjusted_R = adjust(R)
+        adjusted_G = adjust(G)
+        adjusted_B = adjust(B)
+        
+        self.processed_pixels = np.stack([adjusted_R, adjusted_G, adjusted_B, A], axis=-1) if A is not None else np.stack([adjusted_R, adjusted_G, adjusted_B], axis=-1)
+        
+        self.show(self.processed_pixels) 
 
     def show(self, pixels=None):
         if pixels is None:
@@ -58,13 +66,14 @@ class ImageProcessor:
 
 if __name__ == "__main__":
     processor = ImageProcessor('foty/chillguy.jpeg')
+    lenka = ImageProcessor('./foty/image.png')
     # processor.grayscale(method="average")
     # processor.grayscale(method="luminosity")
     # processor.grayscale(method="luminance")
     # processor.grayscale(method="desaturation")
     # processor.grayscale(method="decomposition-max")
     # processor.grayscale(method="decomposition-min")
-    # processor.adjust_brightness(brightnessFactor=1.5)
-    processor.adjust_brightness(100)
-
-        
+    # processor.adjust_brightness(brightnessFactor=60)
+    # processor.contrast_correction(128)
+    
+    lenka.contrast_correction(-128)    # Slight increase in contrast
