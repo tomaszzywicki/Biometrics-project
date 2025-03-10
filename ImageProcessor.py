@@ -87,6 +87,42 @@ class ImageProcessor:
 
         self.show(self.processed_pixels)
 
+    def filter(self, method="average"):
+        R, G, B, A = self.get_RGBA()
+
+        methods = {"average": np.ones((3, 3)) * 1/9,
+                "gaussian": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16,
+                "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])}
+
+        mask = methods[method]
+        d = mask.shape[0] // 2
+
+        n = R.shape[0]
+        m = R.shape[1]
+        R_new = np.zeros((n, m), dtype=np.float32)
+        G_new = np.zeros((n, m), dtype=np.float32)
+        B_new = np.zeros((n, m), dtype=np.float32)
+
+        for i in range(d, n-d):
+            for j in range(d, m-d):
+                sub_R = R[i-d:i+d+1, j-d:j+d+1]
+                sub_G = G[i-d:i+d+1, j-d:j+d+1] 
+                sub_B = B[i-d:i+d+1, j-d:j+d+1] 
+
+                R_new[i, j] = np.sum(np.multiply(sub_R, mask))
+                G_new[i, j] = np.sum(np.multiply(sub_G, mask))
+                B_new[i, j] = np.sum(np.multiply(sub_B, mask))
+
+        R_new = np.clip(R_new, 0, 255).astype(np.uint8)
+        G_new = np.clip(G_new, 0, 255).astype(np.uint8)
+        B_new = np.clip(B_new, 0, 255).astype(np.uint8)
+
+        if A is not None:
+            self.processed_pixels = np.stack([R_new, G_new, B_new, A], axis=-1)
+        else:
+            self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
+
+        self.show(self.processed_pixels) 
 
     def show(self, pixels=None):
         if pixels is None:
@@ -101,7 +137,7 @@ class ImageProcessor:
 
 if __name__ == "__main__":
     processor = ImageProcessor('foty/chillguy.jpeg')
-    lenka = ImageProcessor('./foty/image.png')
+    lenka = ImageProcessor('./foty/lenka.png')
     # processor.grayscale(method="average")
     # processor.grayscale(method="luminosity")
     # processor.grayscale(method="luminance")
@@ -110,4 +146,7 @@ if __name__ == "__main__":
     # processor.grayscale(method="decomposition-min")
     # processor.adjust_brightness(brightnessFactor=60)
     # processor.contrast_correction(128)
-    lenka.binarize(120)
+    # lenka.show()
+    lenka.filter(method="sharpen")
+    
+    # lenka.binarize(120)
