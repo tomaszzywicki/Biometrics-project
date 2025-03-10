@@ -124,6 +124,35 @@ class ImageProcessor:
 
         self.show(self.processed_pixels) 
 
+    def filter2(self, method="average"):
+        """much faster than filter1"""
+        from scipy import signal 
+        
+        R, G, B, A = self.get_RGBA()
+
+        methods = {
+            "average": np.ones((3, 3)) * 1/9,
+            "gaussian": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16,
+            "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+        }
+
+        mask = methods[method]
+        
+        R_new = signal.convolve2d(R, mask, mode='same', boundary='symm')
+        G_new = signal.convolve2d(G, mask, mode='same', boundary='symm')
+        B_new = signal.convolve2d(B, mask, mode='same', boundary='symm')
+
+        R_new = np.clip(R_new, 0, 255).astype(np.uint8)
+        G_new = np.clip(G_new, 0, 255).astype(np.uint8)
+        B_new = np.clip(B_new, 0, 255).astype(np.uint8)
+
+        if A is not None:
+            self.processed_pixels = np.stack([R_new, G_new, B_new, A], axis=-1)
+        else:
+            self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
+
+        self.show(self.processed_pixels)
+
     def show(self, pixels=None):
         if pixels is None:
             pixels = self.pixels
@@ -147,6 +176,8 @@ if __name__ == "__main__":
     # processor.adjust_brightness(brightnessFactor=60)
     # processor.contrast_correction(128)
     # lenka.show()
-    lenka.filter(method="sharpen")
+    # lenka.filter(method="average")
+    # lenka.filter2(method="average")
+    processor.filter2(method="average")
     
     # lenka.binarize(120)
