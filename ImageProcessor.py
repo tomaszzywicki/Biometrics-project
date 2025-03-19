@@ -21,9 +21,12 @@ class ImageProcessor:
         return self.pixels[:, :, 0], self.pixels[:, :, 1], self.pixels[:, :, 2], None 
 
 
-    def grayscale(self, method="luminosity"):
-        R, G, B, A = self.get_RGBA()
-         
+    def grayscale(self, method="luminosity", processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
+
         methods = {
             "average": ((R.astype(np.uint16) + G.astype(np.uint16) + B.astype(np.uint16)) // 3).astype(np.uint8),
             "luminosity": (0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8),
@@ -39,17 +42,30 @@ class ImageProcessor:
         gray = methods[method]
         pixels = np.stack([gray, gray, gray, A], axis=-1) if A is not None else np.stack([gray] * 3, axis=-1)
 
-        self.show(pixels)
+        # self.show(pixels)
         self.processed_pixels = pixels
 
 
-    def adjust_brightness(self, brightnessFactor=0):
-        self.processed_pixels = np.clip(self.pixels.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
-        self.show(self.processed_pixels)
+    def adjust_brightness(self, brightnessFactor=0, processed=False):
+        # self.processed_pixels = np.clip(self.pixels.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
+        # self.show(self.processed_pixels)
 
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
 
-    def contrast_correction(self, contrastFactor: int = 0):
-        R, G, B, A = self.get_RGBA()
+        adjusted_R = np.clip(R.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
+        adjusted_G = np.clip(G.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
+        adjusted_B = np.clip(B.astype(np.int16) + brightnessFactor, 0, 255).astype(np.uint8)
+
+        self.processed_pixels = np.stack([adjusted_R, adjusted_G, adjusted_B, A], axis=-1) if A is not None else np.stack([adjusted_R, adjusted_G, adjusted_B], axis=-1)
+
+    def contrast_correction(self, contrastFactor: int = 0, processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
         
         F = (259 * (contrastFactor + 255)) / (255 * (259 - contrastFactor))
         
@@ -61,20 +77,26 @@ class ImageProcessor:
         
         self.processed_pixels = np.stack([adjusted_R, adjusted_G, adjusted_B, A], axis=-1) if A is not None else np.stack([adjusted_R, adjusted_G, adjusted_B], axis=-1)
         
-        self.show(self.processed_pixels) 
+        # self.show(self.processed_pixels) 
 
 
-    def negative(self):
-        R, G, B, A = self.get_RGBA()
+    def negative(self, processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
         
         self.processed_pixels = np.stack([255 - R, 255 - G, 255 - B, A], axis=-1) if A is not None else np.stack([255 - R, 255 - G, 255 - B], axis=-1)
 
-        self.show(self.processed_pixels) 
+        # self.show(self.processed_pixels) 
 
 
-    def binarize(self, threshold, method="luminosity"):
+    def binarize(self, threshold, method="luminosity", processed=True):
         self.grayscale(method)
-        R, G, B, A = self.get_RGBA(processed=True)
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
 
         R_new = np.where(R > threshold, 255, 0).astype(np.uint8)
         G_new = np.where(G > threshold, 255, 0).astype(np.uint8)
@@ -85,10 +107,13 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
-        self.show(self.processed_pixels)
+        # self.show(self.processed_pixels)
 
-    def filter(self, method="average"):
-        R, G, B, A = self.get_RGBA()
+    def filter(self, method="average", processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
 
         methods = {"average": np.ones((3, 3)) * 1/9,
                 "gaussian": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16,
@@ -122,14 +147,17 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
-        self.show(self.processed_pixels) 
+        # self.show(self.processed_pixels) 
 
-    def filter2(self, method="average"):
+    def filter2(self, method="average", processed=False):
         """much faster than filter1"""
 
         from scipy import signal 
         
-        R, G, B, A = self.get_RGBA()
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
 
         methods = {
             "average": np.ones((3, 3)) * 1/9,
@@ -152,7 +180,7 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
-        self.show(self.processed_pixels)
+        # self.show(self.processed_pixels)
 
     def show(self, pixels=None):
         if pixels is None:
@@ -160,26 +188,25 @@ class ImageProcessor:
         img = Image.fromarray(pixels)
         img.show()
 
+    def show_processed(self):
+        img = Image.fromarray(self.processed_pixels)
+        img.show()
+
     def save(self, output_path):
         img = Image.fromarray(self.processed_pixels)
         img.save(output_path)
 
+    def reset(self):
+        self.processed_pixels = self.pixels.copy()
 
 if __name__ == "__main__":
     processor = ImageProcessor('foty/chillguy.jpeg')
-    lenka = ImageProcessor('./foty/lenka.png')
-    # processor.grayscale(method="average")
-    # processor.grayscale(method="luminosity")
-    # processor.grayscale(method="luminance")
-    # processor.grayscale(method="desaturation")
-    # processor.grayscale(method="decomposition-max")
-    # processor.grayscale(method="decomposition-min")
-    # processor.adjust_brightness(brightnessFactor=60)
-    # processor.contrast_correction(128)
-    # lenka.show()
-    # lenka.filter(method="average")
-    # lenka.filter2(method="average")
-    lenka.show()
-    lenka.filter2(method="sharpen")
+    # lenka = ImageProcessor('./foty/lenka.png')
+    processor.grayscale(processed=True)
+    processor.adjust_brightness(50, processed=True)
+    processor.contrast_correction(50, processed=True)
+    processor.show_processed()
+    processor.reset()
+    processor.show_processed()
     
     # lenka.binarize(120)
