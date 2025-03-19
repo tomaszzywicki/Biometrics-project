@@ -126,6 +126,7 @@ class ImageProcessor:
 
     def filter2(self, method="average"):
         """much faster than filter1"""
+
         from scipy import signal 
         
         R, G, B, A = self.get_RGBA()
@@ -178,6 +179,7 @@ if __name__ == "__main__":
     # lenka.show()
     # lenka.filter(method="average")
     # lenka.filter2(method="average")
-    processor.filter2(method="average")
+    lenka.show()
+    lenka.filter2(method="sharpen")
     
     # lenka.binarize(120)
