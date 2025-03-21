@@ -1,11 +1,29 @@
 import streamlit as st
 from PIL import Image
 import io
+import matplotlib.pyplot as plt
 
 from ImageProcessor import ImageProcessor
 
 def main():
     st.set_page_config(page_title="Image Processing App", layout="wide")
+
+    # to jakieś do stylów ale w sumie to nadal się rozjeżdza
+    st.markdown("""
+        <style>
+        .column-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # Żeby się nie ruszał ten og histogram potem
+    if 'cached_hist_original' not in st.session_state:
+        st.session_state.cached_hist_original = None
+
     
     st.title("Image Processing App")
     
@@ -70,7 +88,7 @@ def main():
         # Original image display
         with col1:
             st.markdown("<h3 style='text-align: center;'>Original Image</h3>", unsafe_allow_html=True)
-            st.image(st.session_state.original_image, use_container_width=True)
+            st.image(st.session_state.original_image, width=400) 
         
         # Process the image when Apply button is clicked
         if apply_button and st.session_state.processor is not None:
@@ -106,10 +124,10 @@ def main():
         with col2:
             st.markdown("<h3 style='text-align: center;'>Processed Image</h3>", unsafe_allow_html=True)
             if st.session_state.processed_image is not None:
-                st.image(st.session_state.processed_image, use_container_width=True)
+                st.image(st.session_state.processed_image, width=400)
             else:
                 # If no processing has been done yet, show the original
-                st.image(st.session_state.original_image, use_container_width=True)
+                st.image(st.session_state.original_image, width=400)
         
         # Download button appears when processed image is available
         if st.session_state.processed_image is not None:
@@ -119,6 +137,39 @@ def main():
                 file_name="processed_image.png",
                 mime="image/png"
             )
+
+
+        # Histogramy
+
+        hist_col1, hist_col2 = st.columns(2)
+
+        # Histogram oryginalnego obrazu - generowany tylko raz przy załadowaniu
+        with hist_col1:
+            st.subheader("Original Image Histogram")
+            if st.session_state.processor is not None:
+                # Generuj histogram tylko gdy nie ma go jeszcze w sesji lub po resecie
+                if st.session_state.cached_hist_original is None or reset_button:
+                    hist_fig_original = st.session_state.processor.make_histogram(processed=False)
+                    st.session_state.cached_hist_original = hist_fig_original
+                
+                # Zawsze wyświetlaj przechowywany histogram
+                st.pyplot(st.session_state.cached_hist_original)
+
+        # Histogram przetworzonego obrazu - aktualizowany tylko po kliknięciu Apply
+        with hist_col2:
+            st.subheader("Processed Image Histogram")
+            if st.session_state.processed_image is not None:
+                # Użyj "cached_hist_processed" do przechowywania histogramu
+                if 'cached_hist_processed' not in st.session_state or apply_button:
+                    # Aktualizuj histogram tylko gdy naciśnięto Apply
+                    hist_fig_processed = st.session_state.processor.make_histogram(processed=True)
+                    st.session_state.cached_hist_processed = hist_fig_processed
+                
+                # Zawsze wyświetlaj przechowywany histogram
+                st.pyplot(st.session_state.cached_hist_processed)
+            else:
+                st.pyplot(st.session_state.cached_hist_original)
+            
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 class ImageProcessor:
 
@@ -76,8 +77,6 @@ class ImageProcessor:
         adjusted_B = adjust(B)
         
         self.processed_pixels = np.stack([adjusted_R, adjusted_G, adjusted_B, A], axis=-1) if A is not None else np.stack([adjusted_R, adjusted_G, adjusted_B], axis=-1)
-        
-        # self.show(self.processed_pixels) 
 
 
     def negative(self, processed=False):
@@ -87,8 +86,6 @@ class ImageProcessor:
             R, G, B, A = self.get_RGBA()
         
         self.processed_pixels = np.stack([255 - R, 255 - G, 255 - B, A], axis=-1) if A is not None else np.stack([255 - R, 255 - G, 255 - B], axis=-1)
-
-        # self.show(self.processed_pixels) 
 
 
     def binarize(self, threshold, method="luminosity", processed=True):
@@ -107,7 +104,6 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
-        # self.show(self.processed_pixels)
 
     def filter(self, method="average", processed=False):
         if processed:
@@ -147,7 +143,6 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
-        # self.show(self.processed_pixels) 
 
     def filter2(self, method="average", processed=False):
         """much faster than filter1"""
@@ -180,7 +175,38 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
-        # self.show(self.processed_pixels)
+    def make_histogram(self, processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
+
+        R_flat = R.ravel()
+        G_flat = G.ravel()
+        B_flat = B.ravel()
+
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8, 4), sharey=True)
+
+        ax1.hist(R_flat, bins=256, range=(0, 255), color='r', alpha=0.8, edgecolor='none')
+        ax1.set_title('Red Channel', color='r')
+        ax1.set_xlim(0, 256)
+
+        ax2.hist(G_flat, bins=256, range=(0, 255), color='g', alpha=0.8, edgecolor='none')
+        ax2.set_title('Green Channel', color='g')
+        ax2.set_xlim(0, 256)
+
+        ax3.hist(B_flat, bins=256, range=(0, 255), color='b', alpha=0.8, edgecolor='none')
+        ax3.set_title('Blue Channel', color='b')
+        ax3.set_xlim(0, 256)
+
+        fig.suptitle('RGB Histograms by Channel', fontsize=16)
+        
+        plt.tight_layout()
+
+        return fig
+        
+
+        
 
     def show(self, pixels=None):
         if pixels is None:
