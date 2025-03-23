@@ -186,7 +186,7 @@ class ImageProcessor:
         G_flat = G.ravel()
         B_flat = B.ravel()
 
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(5, 2), sharey=True)
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(6, 2), sharey=True, constrained_layout=True)
 
         ax1.hist(R_flat, bins=256, range=(0, 255), color='r', alpha=0.8, edgecolor='none', density=True)
         ax1.set_title('Red Channel', color='r', fontsize=6)
@@ -197,13 +197,11 @@ class ImageProcessor:
         ax2.set_xlim(0, 256)
 
         ax3.hist(B_flat, bins=256, range=(0, 255), color='b', alpha=0.8, edgecolor='none', density=True)
-        ax3.set_title('Blue Channel', color='b')
+        ax3.set_title('Blue Channel', color='b', fontsize=6)
         ax3.set_xlim(0, 256)
 
-        fig.suptitle('RGB Histograms by Channel', fontsize=16)
+        fig.suptitle('RGB Histograms by Channel', fontsize=14)
         
-        plt.tight_layout()
-
         return fig
         
     def horizontal_projection(self, processed=False):
@@ -263,7 +261,7 @@ class ImageProcessor:
         
         plt.tight_layout()
         
-        return vertical_proj, fig
+        return vertical_proj, fig 
 
     def show(self, pixels=None):
         if pixels is None:
@@ -291,6 +289,5 @@ if __name__ == "__main__":
     # processor.show_processed()
     # processor.reset()
     # processor.show_processed()
-    processor.horizontal_projection()
     
     # lenka.binarize(120)

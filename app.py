@@ -8,7 +8,7 @@ from ImageProcessor import ImageProcessor
 def main():
     st.set_page_config(page_title="Image Processing App", layout="wide")
 
-    # to jakieś do stylów ale w sumie to nadal się rozjeżdza
+    # Basic styling
     st.markdown("""
         <style>
         .column-center {
@@ -20,7 +20,7 @@ def main():
         </style>
         """, unsafe_allow_html=True)
 
-    # Żeby się nie ruszał ten og histogram potem
+    # Initialize state variables
     if 'cached_hist_original' not in st.session_state:
         st.session_state.cached_hist_original = None
     
@@ -120,14 +120,6 @@ def main():
             st.session_state.cached_hproj_processed = None
             st.session_state.cached_vproj_processed = None
         
-        # Original image display
-        with col1:
-            st.markdown("<h3 style='text-align: center;'>Original Image</h3>", unsafe_allow_html=True)
-            # Create nested columns for centering
-            img_col1, img_col2, img_col3 = st.columns([1, 3, 1])
-            with img_col2:
-                st.image(st.session_state.original_image, width=400)
-        
         # Process the image when Apply button is clicked
         if apply_button and st.session_state.processor is not None:
             processor = st.session_state.processor
@@ -158,17 +150,115 @@ def main():
             processed_img.save(buf, format="PNG")
             st.session_state.processed_image = buf.getvalue()
         
-        # Processed image display
+        # Original image display in first column
+        with col1:
+            st.markdown("<h3 style='text-align: center;'>Original Image</h3>", unsafe_allow_html=True)
+            st.image(st.session_state.original_image, use_container_width=True)
+
+            st.markdown("<h4 style='text-align: center;'>Original - Histogram</h4>", unsafe_allow_html=True)
+            
+            # Histogram
+            if st.session_state.processor is not None:
+                if st.session_state.cached_hist_original is None or reset_button:
+                    plt.figure(figsize=(6, 3))
+                    hist_fig_original = st.session_state.processor.make_histogram(processed=False)
+                    st.session_state.cached_hist_original = hist_fig_original
+                
+                st.pyplot(st.session_state.cached_hist_original)
+                
+            # Projections for original image
+            if show_horizontal_projection or show_vertical_projection:
+                st.markdown("<h4 style='text-align: center;'>Original - Projections</h4>", unsafe_allow_html=True)
+                # Create two sub-columns within the first main column
+                proj_col1, proj_col2 = st.columns(2)
+                
+                # Horizontal projection in first sub-column
+                if show_horizontal_projection:
+                    with proj_col1:
+                        st.markdown("<p style='text-align: center;'>Horizontal Projection</p>", unsafe_allow_html=True)
+                        if st.session_state.processor is not None:
+                            if st.session_state.cached_hproj_original is None or reset_button:
+                                plt.figure(figsize=(4, 3))
+                                _, hproj_fig_original = st.session_state.processor.horizontal_projection(processed=False)
+                                st.session_state.cached_hproj_original = hproj_fig_original
+                            
+                            st.pyplot(st.session_state.cached_hproj_original)
+                
+                # Vertical projection in second sub-column
+                if show_vertical_projection:
+                    with proj_col2:
+                        st.markdown("<p style='text-align: center;'>Vertical Projection</p>", unsafe_allow_html=True)
+                        if st.session_state.processor is not None:
+                            if st.session_state.cached_vproj_original is None or reset_button:
+                                plt.figure(figsize=(4, 3))
+                                _, vproj_fig_original = st.session_state.processor.vertical_projection(processed=False)
+                                st.session_state.cached_vproj_original = vproj_fig_original
+                            
+                            st.pyplot(st.session_state.cached_vproj_original)
+        
+        # Processed image display in second column
         with col2:
             st.markdown("<h3 style='text-align: center;'>Processed Image</h3>", unsafe_allow_html=True)
-            # Create nested columns for centering
-            img_col1, img_col2, img_col3 = st.columns([1, 3, 1])
-            with img_col2:
-                if st.session_state.processed_image is not None:
-                    st.image(st.session_state.processed_image, width=400)
-                else:
-                    # If no processing has been done yet, show the original
-                    st.image(st.session_state.original_image, width=400)
+            if st.session_state.processed_image is not None:
+                st.image(st.session_state.processed_image, use_container_width=True)
+
+                st.markdown("<h4 style='text-align: center;'>Processed - Histogram</h4>", unsafe_allow_html=True)
+                
+                # Histogram 
+                if 'cached_hist_processed' not in st.session_state or apply_button:
+                    plt.figure(figsize=(6, 3))
+                    hist_fig_processed = st.session_state.processor.make_histogram(processed=True)
+                    st.session_state.cached_hist_processed = hist_fig_processed
+                
+                st.pyplot(st.session_state.cached_hist_processed)
+                
+                # Projections for processed image
+                if show_horizontal_projection or show_vertical_projection:
+                    st.markdown("<h4 style='text-align: center;'>Processed - Projections</h4>", unsafe_allow_html=True)
+                    # two sub-columns within the second main column
+                    proj_col1, proj_col2 = st.columns(2)
+                    
+                    # Horizontal projection in first sub-column
+                    if show_horizontal_projection:
+                        with proj_col1:
+                            st.markdown("<p style='text-align: center;'>Horizontal Projection</p>", unsafe_allow_html=True)
+                            if st.session_state.cached_hproj_processed is None or apply_button:
+                                plt.figure(figsize=(4, 3))
+                                _, hproj_fig_processed = st.session_state.processor.horizontal_projection(processed=True)
+                                st.session_state.cached_hproj_processed = hproj_fig_processed
+                            
+                            st.pyplot(st.session_state.cached_hproj_processed)
+                    
+                    # Vertical projection in second sub-column
+                    if show_vertical_projection:
+                        with proj_col2:
+                            st.markdown("<p style='text-align: center;'>Vertical Projection</p>", unsafe_allow_html=True)
+                            if st.session_state.cached_vproj_processed is None or apply_button:
+                                plt.figure(figsize=(4, 3))
+                                _, vproj_fig_processed = st.session_state.processor.vertical_projection(processed=True)
+                                st.session_state.cached_vproj_processed = vproj_fig_processed
+                            
+                            st.pyplot(st.session_state.cached_vproj_processed)
+            else:
+                # If no processing has been done yet, show the original
+                st.image(st.session_state.original_image, use_container_width=True)
+                st.pyplot(st.session_state.cached_hist_original)
+                
+                # Show the original projections if they're enabled
+                if (show_horizontal_projection or show_vertical_projection) and st.session_state.processor is not None:
+                    st.markdown("<h4 style='text-align: center;'>Original - Projections</h4>", unsafe_allow_html=True)
+                    # Two sub-columns within the second main column
+                    proj_col1, proj_col2 = st.columns(2)
+                    
+                    if show_horizontal_projection:
+                        with proj_col1:
+                            st.markdown("<p style='text-align: center;'>Horizontal Projection</p>", unsafe_allow_html=True)
+                            st.pyplot(st.session_state.cached_hproj_original)
+                    
+                    if show_vertical_projection:
+                        with proj_col2:
+                            st.markdown("<p style='text-align: center;'>Vertical Projection</p>", unsafe_allow_html=True)
+                            st.pyplot(st.session_state.cached_vproj_original)
         
         # Download button appears when processed image is available
         if st.session_state.processed_image is not None:
@@ -178,113 +268,6 @@ def main():
                 file_name="processed_image.png",
                 mime="image/png"
             )
-
-        # Histogramy
-        hist_col1, hist_col2 = st.columns(2)
-
-        # Histogram oryginalnego obrazu - generowany tylko raz przy załadowaniu
-        with hist_col1:
-            if st.session_state.processor is not None:
-                if st.session_state.cached_hist_original is None or reset_button:
-                    # Set figure size explicitly here if make_histogram doesn't do it
-                    plt.figure(figsize=(4, 3))
-                    hist_fig_original = st.session_state.processor.make_histogram(processed=False)
-                    st.session_state.cached_hist_original = hist_fig_original
-                
-                # Center align with a fixed width container
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    st.pyplot(st.session_state.cached_hist_original, use_container_width=False)
-
-        # Histogram przetworzonego obrazu - aktualizowany tylko po kliknięciu Apply
-        with hist_col2:
-            if st.session_state.processed_image is not None:
-                # Użyj "cached_hist_processed" do przechowywania histogramu
-                if 'cached_hist_processed' not in st.session_state or apply_button:
-                    # Aktualizuj histogram tylko gdy naciśnięto Apply
-                    plt.figure(figsize=(4, 3))
-                    hist_fig_processed = st.session_state.processor.make_histogram(processed=True)
-                    st.session_state.cached_hist_processed = hist_fig_processed
-                
-                # Center align with a fixed width container
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    st.pyplot(st.session_state.cached_hist_processed, use_container_width=False)
-            else:
-                # Center align with a fixed width container
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    st.pyplot(st.session_state.cached_hist_original, use_container_width=False)
-        
-        # Projekcja pozioma
-        if show_horizontal_projection:
-            hproj_col1, hproj_col2 = st.columns(2)
-            
-            with hproj_col1:
-                if st.session_state.processor is not None:
-                    # Generate projections only once or on reset
-                    if st.session_state.cached_hproj_original is None or reset_button:
-                        plt.figure(figsize=(4, 3))
-                        _, hproj_fig_original = st.session_state.processor.horizontal_projection(processed=False)
-                        st.session_state.cached_hproj_original = hproj_fig_original
-                    
-                    # Center align with a fixed width container
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.pyplot(st.session_state.cached_hproj_original, use_container_width=False)
-            
-            with hproj_col2:
-                if st.session_state.processed_image is not None:
-                    # Update projections only when Apply is clicked
-                    if st.session_state.cached_hproj_processed is None or apply_button:
-                        plt.figure(figsize=(4, 3))
-                        _, hproj_fig_processed = st.session_state.processor.horizontal_projection(processed=True)
-                        st.session_state.cached_hproj_processed = hproj_fig_processed
-                    
-                    # Center align with a fixed width container
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.pyplot(st.session_state.cached_hproj_processed, use_container_width=False)
-                else:
-                    # Center align with a fixed width container
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.pyplot(st.session_state.cached_hproj_original, use_container_width=False)
-        
-        # Projekcja pionowa
-        if show_vertical_projection:
-            vproj_col1, vproj_col2 = st.columns(2)
-            
-            with vproj_col1:
-                if st.session_state.processor is not None:
-                    # Generate projections only once or on reset
-                    if st.session_state.cached_vproj_original is None or reset_button:
-                        plt.figure(figsize=(4, 3))
-                        _, vproj_fig_original = st.session_state.processor.vertical_projection(processed=False)
-                        st.session_state.cached_vproj_original = vproj_fig_original
-                    
-                    # Center align with a fixed width container
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.pyplot(st.session_state.cached_vproj_original, use_container_width=False)
-            
-            with vproj_col2:
-                if st.session_state.processed_image is not None:
-                    # Update projections only when Apply is clicked
-                    if st.session_state.cached_vproj_processed is None or apply_button:
-                        plt.figure(figsize=(4, 3))
-                        _, vproj_fig_processed = st.session_state.processor.vertical_projection(processed=True)
-                        st.session_state.cached_vproj_processed = vproj_fig_processed
-                    
-                    # Center align with a fixed width container
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.pyplot(st.session_state.cached_vproj_processed, use_container_width=False)
-                else:
-                    # Center align with a fixed width container
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.pyplot(st.session_state.cached_vproj_original, use_container_width=False)
 
 if __name__ == "__main__":
     main()
