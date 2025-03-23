@@ -1,4 +1,5 @@
 from PIL import Image
+from networkx import density
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -185,17 +186,17 @@ class ImageProcessor:
         G_flat = G.ravel()
         B_flat = B.ravel()
 
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8, 4), sharey=True)
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(5, 2), sharey=True)
 
-        ax1.hist(R_flat, bins=256, range=(0, 255), color='r', alpha=0.8, edgecolor='none')
-        ax1.set_title('Red Channel', color='r')
+        ax1.hist(R_flat, bins=256, range=(0, 255), color='r', alpha=0.8, edgecolor='none', density=True)
+        ax1.set_title('Red Channel', color='r', fontsize=6)
         ax1.set_xlim(0, 256)
 
-        ax2.hist(G_flat, bins=256, range=(0, 255), color='g', alpha=0.8, edgecolor='none')
-        ax2.set_title('Green Channel', color='g')
+        ax2.hist(G_flat, bins=256, range=(0, 255), color='g', alpha=0.8, edgecolor='none', density=True)
+        ax2.set_title('Green Channel', color='g', fontsize=6)
         ax2.set_xlim(0, 256)
 
-        ax3.hist(B_flat, bins=256, range=(0, 255), color='b', alpha=0.8, edgecolor='none')
+        ax3.hist(B_flat, bins=256, range=(0, 255), color='b', alpha=0.8, edgecolor='none', density=True)
         ax3.set_title('Blue Channel', color='b')
         ax3.set_xlim(0, 256)
 
@@ -223,7 +224,7 @@ class ImageProcessor:
         
         horizontal_proj = np.sum(gray, axis=1) / gray.shape[1]
         
-        fig, ax = plt.subplots(figsize=(6, 8))
+        fig, ax = plt.subplots(figsize=(5, 2))
         
         ax.barh(np.arange(len(horizontal_proj)), horizontal_proj, height=1, color='black', alpha=0.7)
         ax.set_title('Horizontal Projection')
@@ -253,7 +254,7 @@ class ImageProcessor:
         
         vertical_proj = np.sum(gray, axis=0) / gray.shape[0] 
         
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(5, 2))
         
         ax.bar(np.arange(len(vertical_proj)), vertical_proj, width=1, color='black', alpha=0.7)
         ax.set_title('Vertical Projection')
