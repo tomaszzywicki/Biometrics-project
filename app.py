@@ -103,6 +103,22 @@ def main():
             st.session_state.cached_vproj_original = None
             st.session_state.cached_hproj_processed = None
             st.session_state.cached_vproj_processed = None
+
+        ## reset when image changed
+        if st.session_state.original_image != image_bytes:
+            st.session_state.original_image = image_bytes
+            
+            temp_file = io.BytesIO(image_bytes)
+            st.session_state.processor = ImageProcessor(temp_file)
+            st.session_state.processed_image = None
+            
+            # Reset cached projections
+            st.session_state.cached_hist_original = None
+            st.session_state.cached_hist_processed = None
+            st.session_state.cached_hproj_original = None
+            st.session_state.cached_vproj_original = None
+            st.session_state.cached_hproj_processed = None
+            st.session_state.cached_vproj_processed = None
         
         # Original image display
         with col1:
