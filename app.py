@@ -2,6 +2,7 @@ import streamlit as st
 from PIL import Image
 import io
 import matplotlib.pyplot as plt
+import numpy as np
 
 from ImageProcessor import ImageProcessor
 
@@ -66,9 +67,30 @@ def main():
     
     # Filters
     filter_type = st.sidebar.selectbox(
-        "Filter", 
-        ["None", "Average", "Gaussian", "Sharpen"]
-    )
+    "Filter", 
+    ["None", "Average", "Gaussian", "Sharpen", "Custom"]
+)
+    custom_mask = None
+    if filter_type == "Custom":
+        st.sidebar.subheader("Custom Filter Matrix (3x3)")
+        
+        # Tworzenie siatki 3x3 do wprowadzania wag
+        rows = []
+        for i in range(3):
+            cols = st.sidebar.columns(3)
+            row_weights = []
+            for j in range(3):
+                with cols[j]:
+                    weight = st.number_input(
+                        f"Row {i+1}, Col {j+1}",
+                        key=f"custom_filter_{i}_{j}",
+                        value=0.0
+                    )
+                    row_weights.append(weight)
+            rows.append(row_weights)
+        
+        custom_mask = np.array(rows, dtype=np.float32)
+    
     
     st.sidebar.subheader("Display Options")
     show_horizontal_projection = st.sidebar.checkbox("Show Horizontal Projection", False)
@@ -143,7 +165,16 @@ def main():
                 processor.binarize(threshold, processed=True)
                 
             if filter_type != "None":
-                processor.filter2(method=filter_type.lower(), processed=True)
+                if filter_type == "Custom":
+                    if custom_mask is not None:
+                        try:
+                            processor.filter2(method="custom", custom_mask=custom_mask, processed=True)
+                        except Exception as e:
+                            st.error(f"Error applying custom filter: {str(e)}")
+                    else:
+                        st.error("Please provide a custom filter matrix!")
+                else:
+                    processor.filter2(method=filter_type.lower(), processed=True) 
             
             processed_img = Image.fromarray(processor.processed_pixels)
             buf = io.BytesIO()

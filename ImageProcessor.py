@@ -145,9 +145,7 @@ class ImageProcessor:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
 
 
-    def filter2(self, method="average", processed=False):
-        """much faster than filter1"""
-
+    def filter2(self, method="average", custom_mask=None, processed=False):
         from scipy import signal 
         
         if processed:
@@ -158,10 +156,17 @@ class ImageProcessor:
         methods = {
             "average": np.ones((3, 3)) * 1/9,
             "gaussian": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16,
-            "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+            "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]),
+            "custom": custom_mask
         }
 
+        if method not in methods:
+            raise ValueError("Invalid filter method!")
+        
         mask = methods[method]
+        
+        if mask is None and method == "custom":
+            raise ValueError("Custom mask not provided!")
         
         R_new = signal.convolve2d(R, mask, mode='same', boundary='symm')
         G_new = signal.convolve2d(G, mask, mode='same', boundary='symm')
@@ -174,7 +179,7 @@ class ImageProcessor:
         if A is not None:
             self.processed_pixels = np.stack([R_new, G_new, B_new, A], axis=-1)
         else:
-            self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1)
+            self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1) 
 
     def make_histogram(self, processed=False):
         if processed:
