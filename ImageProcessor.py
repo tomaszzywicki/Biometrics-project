@@ -205,8 +205,64 @@ class ImageProcessor:
 
         return fig
         
-
+    def horizontal_projection(self, processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
         
+        # Conversion to grayscale for projection calculation
+        if np.array_equal(R, G) and np.array_equal(G, B):
+            gray = R
+        else:
+            gray = (0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8)
+
+        # binarize
+        threshold = 127
+        gray = np.where(gray > threshold, 255, 0).astype(np.uint8)
+        
+        horizontal_proj = np.sum(gray, axis=1) / gray.shape[1]
+        
+        fig, ax = plt.subplots(figsize=(6, 8))
+        
+        ax.barh(np.arange(len(horizontal_proj)), horizontal_proj, height=1, color='black', alpha=0.7)
+        ax.set_title('Horizontal Projection')
+        ax.set_xlim(0, 255)
+        ax.set_xlabel('Average intensity')
+        ax.invert_yaxis() 
+        
+        plt.tight_layout()
+        
+        return horizontal_proj, fig
+
+    def vertical_projection(self, processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
+        
+        # Conversion to grayscale for projection calculation
+        if np.array_equal(R, G) and np.array_equal(G, B):
+            gray = R
+        else:
+            gray = (0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8)
+
+        # binarize
+        threshold = 127
+        gray = np.where(gray > threshold, 255, 0).astype(np.uint8)
+        
+        vertical_proj = np.sum(gray, axis=0) / gray.shape[0] 
+        
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        ax.bar(np.arange(len(vertical_proj)), vertical_proj, width=1, color='black', alpha=0.7)
+        ax.set_title('Vertical Projection')
+        ax.set_ylim(0, 255)
+        ax.set_ylabel('Average intensity')
+        
+        plt.tight_layout()
+        
+        return vertical_proj, fig
 
     def show(self, pixels=None):
         if pixels is None:
@@ -223,16 +279,17 @@ class ImageProcessor:
         img.save(output_path)
 
     def reset(self):
-        self.processed_pixels = self.pixels.copy()
+        self.processed_pixels = self.pixels.copy()        
 
 if __name__ == "__main__":
     processor = ImageProcessor('foty/chillguy.jpeg')
     # lenka = ImageProcessor('./foty/lenka.png')
-    processor.grayscale(processed=True)
-    processor.adjust_brightness(50, processed=True)
-    processor.contrast_correction(50, processed=True)
-    processor.show_processed()
-    processor.reset()
-    processor.show_processed()
+    # processor.grayscale(processed=True)
+    # processor.adjust_brightness(50, processed=True)
+    # processor.contrast_correction(50, processed=True)
+    # processor.show_processed()
+    # processor.reset()
+    # processor.show_processed()
+    processor.horizontal_projection()
     
     # lenka.binarize(120)

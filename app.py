@@ -23,7 +23,16 @@ def main():
     # Żeby się nie ruszał ten og histogram potem
     if 'cached_hist_original' not in st.session_state:
         st.session_state.cached_hist_original = None
-
+    
+    # Cache for projections
+    if 'cached_hproj_original' not in st.session_state:
+        st.session_state.cached_hproj_original = None
+    if 'cached_vproj_original' not in st.session_state:
+        st.session_state.cached_vproj_original = None
+    if 'cached_hproj_processed' not in st.session_state:
+        st.session_state.cached_hproj_processed = None
+    if 'cached_vproj_processed' not in st.session_state:
+        st.session_state.cached_vproj_processed = None
     
     st.title("Image Processing App")
     
@@ -61,6 +70,10 @@ def main():
         ["None", "Average", "Gaussian", "Sharpen"]
     )
     
+    st.sidebar.subheader("Display Options")
+    show_horizontal_projection = st.sidebar.checkbox("Show Horizontal Projection", False)
+    show_vertical_projection = st.sidebar.checkbox("Show Vertical Projection", False)
+    
     # Reset and Apply buttons next to each other
     col1, col2 = st.sidebar.columns(2)
     with col1:
@@ -84,6 +97,12 @@ def main():
             temp_file = io.BytesIO(image_bytes)
             st.session_state.processor = ImageProcessor(temp_file)
             st.session_state.processed_image = None
+            
+            # Reset cached projections
+            st.session_state.cached_hproj_original = None
+            st.session_state.cached_vproj_original = None
+            st.session_state.cached_hproj_processed = None
+            st.session_state.cached_vproj_processed = None
         
         # Original image display
         with col1:
@@ -138,9 +157,8 @@ def main():
                 mime="image/png"
             )
 
-
         # Histogramy
-
+        st.subheader("Histograms")
         hist_col1, hist_col2 = st.columns(2)
 
         # Histogram oryginalnego obrazu - generowany tylko raz przy załadowaniu
@@ -169,7 +187,60 @@ def main():
                 st.pyplot(st.session_state.cached_hist_processed)
             else:
                 st.pyplot(st.session_state.cached_hist_original)
+        
+        # Projekcja pozioma
+        if show_horizontal_projection:
+            st.subheader("Horizontal Projections")
+            hproj_col1, hproj_col2 = st.columns(2)
             
+            with hproj_col1:
+                st.subheader("Original Image - Horizontal Projection")
+                if st.session_state.processor is not None:
+                    # Generate projections only once or on reset
+                    if st.session_state.cached_hproj_original is None or reset_button:
+                        _, hproj_fig_original = st.session_state.processor.horizontal_projection(processed=False)
+                        st.session_state.cached_hproj_original = hproj_fig_original
+                    
+                    st.pyplot(st.session_state.cached_hproj_original)
+            
+            with hproj_col2:
+                st.subheader("Processed Image - Horizontal Projection")
+                if st.session_state.processed_image is not None:
+                    # Update projections only when Apply is clicked
+                    if st.session_state.cached_hproj_processed is None or apply_button:
+                        _, hproj_fig_processed = st.session_state.processor.horizontal_projection(processed=True)
+                        st.session_state.cached_hproj_processed = hproj_fig_processed
+                    
+                    st.pyplot(st.session_state.cached_hproj_processed)
+                else:
+                    st.pyplot(st.session_state.cached_hproj_original)
+        
+        # Projekcja pionowa
+        if show_vertical_projection:
+            st.subheader("Vertical Projections")
+            vproj_col1, vproj_col2 = st.columns(2)
+            
+            with vproj_col1:
+                st.subheader("Original Image - Vertical Projection")
+                if st.session_state.processor is not None:
+                    # Generate projections only once or on reset
+                    if st.session_state.cached_vproj_original is None or reset_button:
+                        _, vproj_fig_original = st.session_state.processor.vertical_projection(processed=False)
+                        st.session_state.cached_vproj_original = vproj_fig_original
+                    
+                    st.pyplot(st.session_state.cached_vproj_original)
+            
+            with vproj_col2:
+                st.subheader("Processed Image - Vertical Projection")
+                if st.session_state.processed_image is not None:
+                    # Update projections only when Apply is clicked
+                    if st.session_state.cached_vproj_processed is None or apply_button:
+                        _, vproj_fig_processed = st.session_state.processor.vertical_projection(processed=True)
+                        st.session_state.cached_vproj_processed = vproj_fig_processed
+                    
+                    st.pyplot(st.session_state.cached_vproj_processed)
+                else:
+                    st.pyplot(st.session_state.cached_vproj_original)
 
 if __name__ == "__main__":
     main()
