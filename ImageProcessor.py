@@ -267,6 +267,65 @@ class ImageProcessor:
         plt.tight_layout()
         
         return vertical_proj, fig 
+    
+    def edge_detection(self, method="sobel", threshold=30, processed=False):
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
+        
+        # Convert to grayscale if not already
+        if np.array_equal(R, G) and np.array_equal(G, B):
+            gray = R
+        else:
+            gray = (0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8)
+        
+        if method == "sobel":
+            ## Gaussian smoothing
+            gaussian_kernel = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16
+
+            height, width = gray.shape
+            padded = np.pad(gray, ((1, 1), (1, 1)), mode='reflect')
+            smoothed = np.zeros((height, width), dtype=np.float32)
+
+            for i in range(height):
+                for j in range(width):
+                    patch = padded[i:i+3, j:j+3]
+                    smoothed[i, j] = np.sum(np.multiply(patch, gaussian_kernel))
+            
+            smoothed = smoothed.astype(np.uint8)
+
+            ## Sobel operators
+            sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+            sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+
+            grad_x = np.zeros_like(smoothed, dtype=np.float32)
+            grad_y = np.zeros_like(smoothed, dtype=np.float32)
+
+            padded = np.pad(smoothed, ((1, 1), (1, 1)), mode='reflect')
+
+            for i in range(height):
+                for j in range(width):
+                    patch = padded[i:i+3, j:j+3]
+                    grad_x[i, j] = np.sum(np.multiply(patch, sobel_x))
+                    grad_y[i, j] = np.sum(np.multiply(patch, sobel_y))
+
+                ## Gradient magnitude
+                magnitude = np.sqrt(np.square(grad_x) + np.square(grad_y))
+
+                ## Normalization
+                if np.max(magnitude) > 0:
+                    magnitude = 255 * magnitude / np.max(magnitude)
+                
+                magnitude = magnitude.astype(np.uint8)
+
+                edges = np.where(magnitude > threshold, 255, 0).astype(np.uint8)
+
+                if A is not None:
+                    self.processed_pixels = np.stack([edges, edges, edges, A], axis=-1)
+                else:
+                    self.processed_pixels = np.stack([edges, edges, edges], axis=-1)
+            
 
     def show(self, pixels=None):
         if pixels is None:
@@ -287,12 +346,16 @@ class ImageProcessor:
 
 if __name__ == "__main__":
     processor = ImageProcessor('foty/chillguy.jpeg')
-    # lenka = ImageProcessor('./foty/lenka.png')
+    lenka = ImageProcessor('./foty/lenka.png')
     # processor.grayscale(processed=True)
     # processor.adjust_brightness(50, processed=True)
     # processor.contrast_correction(50, processed=True)
     # processor.show_processed()
     # processor.reset()
     # processor.show_processed()
+    # processor.edge_detection(threshold=50)
+    # processor.show_processed()
+    # lenka.edge_detection(threshold=30)
+    # lenka.show_processed()
     
     # lenka.binarize(120)

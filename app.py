@@ -65,6 +65,10 @@ def main():
     apply_binarize = st.sidebar.checkbox("Binarize", False)
     threshold = st.sidebar.slider("Threshold", 0, 255, 128, disabled=not apply_binarize)
     
+    # New Edge Detection section
+    apply_edge_detection = st.sidebar.checkbox("Edge Detection", False)
+    edge_threshold = st.sidebar.slider("Edge Threshold", 0, 255, 30, disabled=not apply_edge_detection)
+    
     # Filters
     filter_type = st.sidebar.selectbox(
     "Filter", 
@@ -163,6 +167,10 @@ def main():
                 
             if apply_binarize:
                 processor.binarize(threshold, processed=True)
+                
+            # New edge detection
+            if apply_edge_detection:
+                processor.edge_detection(threshold=edge_threshold, processed=True)
                 
             if filter_type != "None":
                 if filter_type == "Custom":
