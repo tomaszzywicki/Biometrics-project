@@ -72,7 +72,7 @@ def main():
     # Filters
     filter_type = st.sidebar.selectbox(
     "Filter", 
-    ["None", "Average", "Gaussian", "Sharpen", "Custom"]
+    ["None", "Average", "Gaussian", "Sharpen", "Emboss", "Custom"]
 )
     custom_mask = None
     if filter_type == "Custom":
@@ -281,6 +281,7 @@ def main():
             else:
                 # If no processing has been done yet, show the original
                 st.image(st.session_state.original_image, use_container_width=True)
+                st.markdown("<h4 style='text-align: center;'>Processed - Histogram</h4>", unsafe_allow_html=True)
                 st.pyplot(st.session_state.cached_hist_original)
                 
                 # Show the original projections if they're enabled

@@ -113,8 +113,10 @@ class ImageProcessor:
             R, G, B, A = self.get_RGBA()
 
         methods = {"average": np.ones((3, 3)) * 1/9,
-                "gaussian": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16,
-                "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])}
+                "gaussian": np.array([[1, 3, 1], [3, 16, 3], [1, 3, 1]]) / 32,
+                "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]),
+                "emboss": np.array([[-2, -1, 0], [-1, 1, 1], [0, 1, 2]])
+        }
 
         mask = methods[method]
         d = mask.shape[0] // 2
@@ -155,8 +157,9 @@ class ImageProcessor:
 
         methods = {
             "average": np.ones((3, 3)) * 1/9,
-            "gaussian": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16,
+            "gaussian": np.array([[1, 3, 1], [3, 16, 3], [1, 3, 1]]) / 32,
             "sharpen": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]),
+            "emboss": np.array([[-2, -1, 0], [-1, 1, 1], [0, 1, 2]]),
             "custom": custom_mask
         }
 
