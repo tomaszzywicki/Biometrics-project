@@ -2,6 +2,8 @@ from PIL import Image
 from networkx import density
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import ndimage
+from scipy.ndimage import sobel
 
 class ImageProcessor:
 
@@ -325,6 +327,39 @@ class ImageProcessor:
                     self.processed_pixels = np.stack([edges, edges, edges, A], axis=-1)
                 else:
                     self.processed_pixels = np.stack([edges, edges, edges], axis=-1)
+
+    def edge_detection2(self, method="sobel", threshold=50, processed=False):
+        # Get the image channels
+        if processed:
+            R, G, B, A = self.get_RGBA(processed=True)
+        else:
+            R, G, B, A = self.get_RGBA()
+        
+        # Convert to grayscale
+        if np.array_equal(R, G) and np.array_equal(G, B):
+            gray = R
+        else:
+            gray = (0.299 * R + 0.587 * G + 0.114 * B).astype(np.float32)
+        
+        # Apply Gaussian smoothing
+        smoothed = ndimage.gaussian_filter(gray, sigma=1)
+        
+        # Compute Sobel gradients
+        grad_x = sobel(smoothed, axis=0)
+        grad_y = sobel(smoothed, axis=1)
+        
+        # Compute gradient magnitude with safe normalization
+        magnitude = np.sqrt(grad_x**2 + grad_y**2)
+        
+        # Create binary edge map
+        edges = (magnitude > threshold).astype(np.uint8) * 255
+        
+        # Prepare output
+        if A is not None:
+            self.processed_pixels = np.stack([edges, edges, edges, A], axis=-1)
+        else:
+            self.processed_pixels = np.stack([edges, edges, edges], axis=-1)
+    
             
 
     def show(self, pixels=None):
@@ -357,5 +392,7 @@ if __name__ == "__main__":
     # processor.show_processed()
     # lenka.edge_detection(threshold=30)
     # lenka.show_processed()
+    processor.edge_detection2()
+    processor.show_processed()
     
     # lenka.binarize(120)

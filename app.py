@@ -67,7 +67,7 @@ def main():
     
     # New Edge Detection section
     apply_edge_detection = st.sidebar.checkbox("Edge Detection", False)
-    edge_threshold = st.sidebar.slider("Edge Threshold", 0, 255, 30, disabled=not apply_edge_detection)
+    edge_threshold = st.sidebar.slider("Edge Threshold", 0, 255, 50, disabled=not apply_edge_detection)
     
     # Filters
     filter_type = st.sidebar.selectbox(
@@ -170,7 +170,7 @@ def main():
                 
             # New edge detection
             if apply_edge_detection:
-                processor.edge_detection(threshold=edge_threshold, processed=True)
+                processor.edge_detection2(threshold=edge_threshold, processed=True)
                 
             if filter_type != "None":
                 if filter_type == "Custom":
