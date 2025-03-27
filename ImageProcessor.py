@@ -186,7 +186,7 @@ class ImageProcessor:
         else:
             self.processed_pixels = np.stack([R_new, G_new, B_new], axis=-1) 
 
-    def make_histogram(self, processed=False):
+    def make_histogram(self, processed=False, log_scale=False, clip_percentile=99):
         if processed:
             R, G, B, A = self.get_RGBA(processed=True)
         else:
@@ -196,21 +196,51 @@ class ImageProcessor:
         G_flat = G.ravel()
         B_flat = B.ravel()
 
+        plt.style.use('dark_background')
+
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(6, 2), sharey=True, constrained_layout=True)
 
+        # Plot histograms
         ax1.hist(R_flat, bins=256, range=(0, 255), color='r', alpha=0.8, edgecolor='none', density=True)
         ax1.set_title('Red Channel', color='r', fontsize=6)
         ax1.set_xlim(0, 256)
-
+        
         ax2.hist(G_flat, bins=256, range=(0, 255), color='g', alpha=0.8, edgecolor='none', density=True)
         ax2.set_title('Green Channel', color='g', fontsize=6)
         ax2.set_xlim(0, 256)
-
+        
         ax3.hist(B_flat, bins=256, range=(0, 255), color='b', alpha=0.8, edgecolor='none', density=True)
         ax3.set_title('Blue Channel', color='b', fontsize=6)
         ax3.set_xlim(0, 256)
-
-        fig.suptitle('RGB Histograms by Channel', fontsize=14)
+        
+        # Apply log scale if requested
+        if log_scale:
+            ax1.set_yscale('log')
+            ax2.set_yscale('log')
+            ax3.set_yscale('log')
+        
+        # Apply clipping if requested
+        if clip_percentile is not None:
+            # Calculate histograms to get y values
+            r_hist, _ = np.histogram(R_flat, bins=256, range=(0, 255), density=True)
+            g_hist, _ = np.histogram(G_flat, bins=256, range=(0, 255), density=True)
+            b_hist, _ = np.histogram(B_flat, bins=256, range=(0, 255), density=True)
+            
+            # Combine all values
+            all_values = np.concatenate([r_hist, g_hist, b_hist])
+            non_zero = all_values[all_values > 0]
+            
+            if len(non_zero) > 0:
+                # Calculate max value at specified percentile
+                y_max = np.percentile(non_zero, clip_percentile)
+                
+                # Set y-axis limit
+                ax1.set_ylim(0, y_max)
+                ax2.set_ylim(0, y_max)
+                ax3.set_ylim(0, y_max)
+        
+        scale_info = "Log Scale" if log_scale else "Linear Scale"
+        fig.suptitle(f'RGB Histograms', fontsize=10)
         
         return fig
         
@@ -220,7 +250,6 @@ class ImageProcessor:
         else:
             R, G, B, A = self.get_RGBA()
         
-        # Conversion to grayscale for projection calculation
         if np.array_equal(R, G) and np.array_equal(G, B):
             gray = R
         else:
@@ -234,7 +263,7 @@ class ImageProcessor:
         
         fig, ax = plt.subplots(figsize=(5, 2))
         
-        ax.barh(np.arange(len(horizontal_proj)), horizontal_proj, height=1, color='black', alpha=0.7)
+        ax.barh(np.arange(len(horizontal_proj)), horizontal_proj, height=1, color='white', alpha=0.7)
         ax.set_title('Horizontal Projection')
         ax.set_xlim(0, 255)
         ax.set_xlabel('Average intensity')
@@ -250,13 +279,11 @@ class ImageProcessor:
         else:
             R, G, B, A = self.get_RGBA()
         
-        # Conversion to grayscale for projection calculation
         if np.array_equal(R, G) and np.array_equal(G, B):
             gray = R
         else:
             gray = (0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8)
 
-        # binarize
         threshold = 127
         gray = np.where(gray > threshold, 255, 0).astype(np.uint8)
         
@@ -264,7 +291,7 @@ class ImageProcessor:
         
         fig, ax = plt.subplots(figsize=(5, 2))
         
-        ax.bar(np.arange(len(vertical_proj)), vertical_proj, width=1, color='black', alpha=0.7)
+        ax.bar(np.arange(len(vertical_proj)), vertical_proj, width=1, color='white', alpha=0.7)
         ax.set_title('Vertical Projection')
         ax.set_ylim(0, 255)
         ax.set_ylabel('Average intensity')

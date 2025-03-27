@@ -145,7 +145,9 @@ def main():
             st.session_state.cached_vproj_original = None
             st.session_state.cached_hproj_processed = None
             st.session_state.cached_vproj_processed = None
-        
+
+            # restore to defaults
+                    
         # Process the image when Apply button is clicked
         if apply_button and st.session_state.processor is not None:
             processor = st.session_state.processor
